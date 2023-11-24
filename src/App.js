@@ -1,117 +1,135 @@
-import {Component} from 'react'
-import {Route, Switch, Redirect} from 'react-router-dom'
+import React, { useState } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import LoginForm from './components/LoginForm';
+import Home from './components/Home';
+import Products from './components/Products';
+import ProductItemDetails from './components/ProductItemDetails';
+import Cart from './components/Cart';
+import NotFound from './components/NotFound';
+import ProtectedRoute from './components/ProtectedRoute';
+import CartContext from './context/CartContext';
+import './App.css';
 
-import LoginForm from './components/LoginForm'
-import Home from './components/Home'
-import Products from './components/Products'
-import ProductItemDetails from './components/ProductItemDetails'
-import Cart from './components/Cart'
-import NotFound from './components/NotFound'
-import ProtectedRoute from './components/ProtectedRoute'
-import CartContext from './context/CartContext'
+function App() {
 
-import './App.css'
+    const [cartList, setCartList] = useState(() => JSON.parse(sessionStorage.getItem('cart')) ?? []);
 
-class App extends Component {
-  state = {
-    cartList: [],
-  }
+    const removeAllCartItems = () => {
 
-  removeAllCartItems = () => {
-    this.setState({cartList: []})
-  }
+        setCartList([]);
 
-  decrementCartItemQuantity = id => {
-    const {cartList} = this.state
+        sessionStorage.setItem('cart', JSON.stringify([]));
+    };
 
-    const item = cartList.filter(eachItem => eachItem.id === id)
+    const decrementCartItemQuantity = id => {
 
-    if (item[0].quantity > 1) {
-      this.setState(prevState => ({
-        cartList: prevState.cartList.map(eachItem => {
-          if (id === eachItem.id) {
-            return {...eachItem, quantity: eachItem.quantity - 1}
-          }
-          return eachItem
-        }),
-      }))
-    } else {
-      this.setState(prevState => ({
-        cartList: prevState.cartList.filter(eachItem => eachItem.id !== id),
-      }))
-    }
-  }
+        let updatedCartList = [...cartList];
 
-  incrementCartItemQuantity = id => {
-    this.setState(prevState => ({
-      cartList: prevState.cartList.map(eachItem => {
-        if (id === eachItem.id) {
-          return {...eachItem, quantity: eachItem.quantity + 1}
+        const item = updatedCartList.filter(eachItem => eachItem.id === id);
+
+        if (item?.[0]?.quantity > 1) {
+            updatedCartList = updatedCartList.map(eachItem => {
+                if (id === eachItem.id) {
+                    return { ...eachItem, quantity: eachItem.quantity - 1 };
+                }
+                return eachItem;
+            });
         }
-        return eachItem
-      }),
-    }))
-  }
+        else {
+            updatedCartList = updatedCartList.filter(eachItem => eachItem.id !== id);
+        }
 
-  removeCartItem = id => {
-    this.setState(prevState => ({
-      cartList: prevState.cartList.filter(eachItem => eachItem.id !== id),
-    }))
-  }
+        setCartList([...updatedCartList]);
 
-  addCartItem = product => {
-    const {cartList} = this.state
+        sessionStorage.setItem('cart', JSON.stringify([...updatedCartList]));
+    };
 
-    const {id, quantity} = product
+    const incrementCartItemQuantity = id => {
 
-    const itemPresent = cartList.filter(eachItem => eachItem.id === id)
+        let updatedCartList = [...cartList];
 
-    if (itemPresent.length > 0) {
-      this.setState(prevState => ({
-        cartList: prevState.cartList.map(eachItem => {
-          if (id === eachItem.id) {
-            return {...eachItem, quantity: eachItem.quantity + quantity}
-          }
-          return eachItem
-        }),
-      }))
-    } else {
-      this.setState(prevState => ({
-        cartList: [...prevState.cartList, product],
-      }))
-    }
-  }
+        updatedCartList = updatedCartList.map(eachItem => {
+            if (id === eachItem.id) {
+                return { ...eachItem, quantity: eachItem.quantity + 1 };
+            }
+            return eachItem;
+        });
 
-  render() {
-    const {cartList} = this.state
+        setCartList([...updatedCartList]);
+
+        sessionStorage.setItem('cart', JSON.stringify([...updatedCartList]));
+    };
+
+    const removeCartItem = id => {
+
+        let updatedCartList = [...cartList];
+
+        updatedCartList = updatedCartList.filter(eachItem => eachItem.id !== id);
+
+        setCartList([...updatedCartList]);
+
+        sessionStorage.setItem('cart', JSON.stringify([...updatedCartList]));
+    };
+
+    const addCartItem = product => {
+
+        const { id, quantity } = product;
+
+        if (!cartList.length) {
+            setCartList([{ ...product }]);
+
+            sessionStorage.setItem('cart', JSON.stringify([{ ...product }]));
+        }
+        else {
+
+            let itemPresent = cartList.filter(eachItem => eachItem.id === id);
+
+            if (itemPresent?.length > 0) {
+                itemPresent = cartList.map(eachItem => {
+                    if (id === eachItem.id) {
+                        return { ...eachItem, quantity: eachItem.quantity + quantity };
+                    }
+                    return eachItem;
+                });
+            }
+            else {
+                itemPresent = [...cartList, product];
+            }
+
+            setCartList([...itemPresent]);
+
+            sessionStorage.setItem('cart', JSON.stringify([...itemPresent]));
+        }
+
+    };
 
     return (
-      <CartContext.Provider
-        value={{
-          cartList,
-          addCartItem: this.addCartItem,
-          removeCartItem: this.removeCartItem,
-          incrementCartItemQuantity: this.incrementCartItemQuantity,
-          decrementCartItemQuantity: this.decrementCartItemQuantity,
-          removeAllCartItems: this.removeAllCartItems,
-        }}
-      >
-        <Switch>
-          <Route exact path="/login" component={LoginForm} />
-          <ProtectedRoute exact path="/" component={Home} />
-          <ProtectedRoute exact path="/products" component={Products} />
-          <ProtectedRoute
-            exact
-            path="/products/:id"
-            component={ProductItemDetails}
-          />
-          <ProtectedRoute exact path="/cart" component={Cart} />
-          <Route path="/not-found" component={NotFound} />
-          <Redirect to="not-found" />
-        </Switch>
-      </CartContext.Provider>
-    )
-  }
+        <CartContext.Provider
+            value={{
+                cartList,
+                addCartItem: addCartItem,
+                removeCartItem: removeCartItem,
+                incrementCartItemQuantity: incrementCartItemQuantity,
+                decrementCartItemQuantity: decrementCartItemQuantity,
+                removeAllCartItems: removeAllCartItems,
+            }}
+        >
+            <Routes>
+                <Route exact path="/login" element={<LoginForm />} />
+                <Route exact path="/" element={<ProtectedRoute path="/" element={Home} />} />
+                <Route exact path="/products" element={<ProtectedRoute path="/products" element={Products} />} />
+                <Route exact path="/products/:id" element={<ProtectedRoute path="/products/:id" element={ProductItemDetails} />} />
+                <Route exact path="/cart" element={<ProtectedRoute path="/cart" element={Cart} />} />
+                <Route path="/not-found" element={<NotFound />} />
+                <Route
+                    path="*"
+                    element={
+                        <Navigate to="/not-found" />
+                    }
+                />
+            </Routes>
+        </CartContext.Provider>
+    );
 }
 
-export default App
+export default App;
