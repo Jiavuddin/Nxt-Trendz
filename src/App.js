@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import LoginForm from './components/LoginForm';
-import Home from './components/Home';
-import Products from './components/Products';
-import ProductItemDetails from './components/ProductItemDetails';
-import Cart from './components/Cart';
-import NotFound from './components/NotFound';
-import ProtectedRoute from './components/ProtectedRoute';
+import LoginForm from './components/LoginForm/LoginForm';
+import Home from './components/Home/Home';
+import Products from './components/Products/Products';
+import ProductItemDetails from './components/ProductItemDetails/ProductItemDetails';
+import Cart from './components/Cart/Cart';
+import NotFound from './components/NotFound/NotFound';
+import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
 import CartContext from './context/CartContext';
 import './App.css';
 
 function App() {
 
     const [cartList, setCartList] = useState(() => JSON.parse(sessionStorage.getItem('cart')) ?? []);
+
+    const [showThanks, setShowThanks] = useState(false);
 
     const removeAllCartItems = () => {
 
@@ -112,14 +114,16 @@ function App() {
                 incrementCartItemQuantity: incrementCartItemQuantity,
                 decrementCartItemQuantity: decrementCartItemQuantity,
                 removeAllCartItems: removeAllCartItems,
+                showThanks: showThanks,
+                setShowThanks: setShowThanks
             }}
         >
             <Routes>
                 <Route exact path="/login" element={<LoginForm />} />
-                <Route exact path="/" element={<ProtectedRoute path="/" element={Home} />} />
-                <Route exact path="/products" element={<ProtectedRoute path="/products" element={Products} />} />
-                <Route exact path="/products/:id" element={<ProtectedRoute path="/products/:id" element={ProductItemDetails} />} />
-                <Route exact path="/cart" element={<ProtectedRoute path="/cart" element={Cart} />} />
+                <Route exact path="/" element={<ProtectedRoute element={Home} />} />
+                <Route exact path="/products" element={<ProtectedRoute element={Products} />} />
+                <Route exact path="/products/:id" element={<ProtectedRoute element={ProductItemDetails} />} />
+                <Route exact path="/cart" element={<ProtectedRoute element={Cart} />} />
                 <Route path="/not-found" element={<NotFound />} />
                 <Route
                     path="*"
